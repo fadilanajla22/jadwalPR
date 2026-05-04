@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PR Scheduler</title>
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <i data-lucide="book-open"></i>
+        <span>PR Scheduler</span>
+      </div>
+      <button class="btn btn-primary" id="btnTambah">
+        <i data-lucide="plus"></i>
+        <span>Tambah PR</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="dashboard">
+      <div class="stat-card">
+        <div class="stat-icon icon-active"><i data-lucide="clock"></i></div>
+        <div>
+          <div class="stat-num" id="statAktif">0</div>
+          <div class="stat-label">Tugas Aktif</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-done"><i data-lucide="check-circle"></i></div>
+        <div>
+          <div class="stat-num" id="statSelesai">0</div>
+          <div class="stat-label">Selesai</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-urgent"><i data-lucide="alert-triangle"></i></div>
+        <div>
+          <div class="stat-num" id="statMendekat">0</div>
+          <div class="stat-label">Deadline Dekat</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== NOTIF BANNER ===== -->
+    <div id="notifBanner" class="notif-banner hidden"></div>
+
+    <!-- ===== FILTER ===== -->
+    <section class="filter-bar card">
+      <div class="filter-group">
+        <label><i data-lucide="book"></i> Mata Pelajaran</label>
+        <select id="filterMapel"><option value="">Semua</option></select>
+      </div>
+      <div class="filter-group">
+        <label><i data-lucide="flag"></i> Prioritas</label>
+        <select id="filterPrioritas">
+          <option value="">Semua</option>
+          <option value="Tinggi">Tinggi</option>
+          <option value="Sedang">Sedang</option>
+          <option value="Rendah">Rendah</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i data-lucide="check-square"></i> Status</label>
+        <select id="filterStatus">
+          <option value="">Semua</option>
+          <option value="Belum Selesai">Belum Selesai</option>
+          <option value="Sedang Dikerjakan">Sedang Dikerjakan</option>
+          <option value="Selesai">Selesai</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i data-lucide="calendar"></i> Deadline</label>
+        <input type="date" id="filterDeadline" />
+      </div>
+      <button class="btn btn-ghost" id="btnReset">
+        <i data-lucide="rotate-ccw"></i> Reset
+      </button>
+    </section>
+
+    <!-- ===== TABS ===== -->
+    <div class="tab-bar">
+      <button class="tab active" data-tab="list">
+        <i data-lucide="list"></i> Daftar
+      </button>
+      <button class="tab" data-tab="calendar">
+        <i data-lucide="calendar-days"></i> Kalender
+      </button>
+    </div>
+
+    <!-- ===== LOADING ===== -->
+    <div id="loading" class="state-box">
+      <div class="spinner"></div>
+      <p>Memuat data...</p>
+    </div>
+
+    <!-- ===== EMPTY ===== -->
+    <div id="emptyState" class="state-box hidden">
+      <i data-lucide="inbox" class="state-icon"></i>
+      <p>Belum ada PR. Yuk tambahkan yang pertama!</p>
+    </div>
+
+    <!-- ===== LIST VIEW ===== -->
+    <div id="viewList" class="view">
+      <div id="prList" class="pr-list"></div>
+    </div>
+
+    <!-- ===== CALENDAR VIEW ===== -->
+    <div id="viewCalendar" class="view hidden">
+      <div class="cal-nav card">
+        <button class="btn btn-ghost btn-icon-only" id="prevMonth">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <span id="calTitle" class="cal-title"></span>
+        <button class="btn btn-ghost btn-icon-only" id="nextMonth">
+          <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
+      <div id="calGrid" class="cal-grid card"></div>
+    </div>
+
+  </main>
+
+  <!-- ===== MODAL FORM ===== -->
+  <div id="modalOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal card">
+      <div class="modal-header">
+        <h2 id="modalTitle">Tambah PR</h2>
+        <button class="btn btn-ghost btn-icon-only" id="btnCloseModal" aria-label="Tutup">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="prForm" novalidate>
+        <input type="hidden" id="editId" />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="mataPelajaran">Mata Pelajaran <span class="req">*</span></label>
+            <input type="text" id="mataPelajaran" placeholder="Contoh: Matematika" autocomplete="off" />
+            <span class="err-msg" id="errMapel"></span>
+          </div>
+          <div class="form-group">
+            <label for="prioritas">Prioritas <span class="req">*</span></label>
+            <select id="prioritas">
+              <option value="">Pilih...</option>
+              <option value="Tinggi">🔴 Tinggi</option>
+              <option value="Sedang">🟡 Sedang</option>
+              <option value="Rendah">🟢 Rendah</option>
+            </select>
+            <span class="err-msg" id="errPrioritas"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="judul">Judul Tugas <span class="req">*</span></label>
+          <input type="text" id="judul" placeholder="Contoh: Latihan Soal Bab 3" autocomplete="off" />
+          <span class="err-msg" id="errJudul"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="deskripsi">Deskripsi</label>
+          <textarea id="deskripsi" rows="3" placeholder="Detail tugas (opsional)..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="deadline">Deadline <span class="req">*</span></label>
+            <input type="date" id="deadline" />
+            <span class="err-msg" id="errDeadline"></span>
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="Belum Selesai">Belum Selesai</option>
+              <option value="Sedang Dikerjakan">Sedang Dikerjakan</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="btnCancel">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmit">
+            <i data-lucide="save"></i> Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL KONFIRMASI HAPUS ===== -->
+  <div id="confirmOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal modal-sm card">
+      <div class="confirm-body">
+        <div class="confirm-icon"><i data-lucide="trash-2"></i></div>
+        <h3>Hapus PR ini?</h3>
+        <p>Data akan dihapus permanen dari Google Sheets.</p>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="btnCancelDel">Batal</button>
+        <button class="btn btn-danger" id="btnConfirmDel">
+          <i data-lucide="trash-2"></i> Hapus
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
